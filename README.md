@@ -191,24 +191,39 @@ For all the above API endpoints, error responses should:
 - Using NestJs as per requirement
 - Using npm for this project for simplicity
 - Using docker to provide a container for the DynamoDB local database so it does not need to be installed locally.
-- Install
+- Using environment variables to handle configurations and secrets.
+
+### DB implementation considerations
+- NoSQL Database
+- Disigning for single-table operations to reduce complexity
+- Allow data duplication to optimize queries
+  
+#### Students Table 
+- Primary Key: `email` (Partition Key)
+- 
+#### Teachers Table 
+- Primary Key: `email` (Partition Key)
+- 
+#### Registration Table 
+- Primary Key: `teacherEmail` (Partition Key) and `studentEmail` (Sort Key)
 
 ### Implementation Steps
 
 1) Create a new repository
 2) Create new Nest.JS Project
 3) Install docker and pull the dynamodb-local image
-4) Install the AWS SDK, so it can be used to interface with the Database
+4) Install the AWS SDK v3, so it can be used to interface with the Database
+5) Install dotenv-cli to handle environment files
 
 
 ### Installation
 Make sure to have docker or podman installed.
 
-Use `docker pull amazon/dynamodb-local` to pull the DynamoDB local Docker image. 
-
+- Use `docker pull amazon/dynamodb-local` to pull the DynamoDB local Docker image. 
+- make sure to add the proper values to the `.env.local` file
+  - `AWS_REGION='localhost'
+    AWS_ENDPOINT='http://localhost:8000'`
 
 #### Run Locally
 - run `npm install` to install necessary dependencies.
 - run `npm run start:dev` to start server in watch mode. This also automatically starts the docker container containing the database.
-
-#### Online Access
