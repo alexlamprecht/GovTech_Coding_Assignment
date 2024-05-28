@@ -4,6 +4,7 @@ import {
   CreateTableCommandInput,
   DescribeTableCommand,
   DynamoDBClient,
+  ScanCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
@@ -11,6 +12,7 @@ import {
   GetCommand,
   PutCommandInput,
   GetCommandInput,
+  ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 
 @Injectable()
@@ -58,11 +60,15 @@ export class DynamoDbClient {
     }
   }
 
-  async putItem(params: PutCommandInput) {
+  async addItem(params: PutCommandInput) {
     return this.documentClient.send(new PutCommand(params));
   }
 
   async getItem(params: GetCommandInput) {
     return this.documentClient.send(new GetCommand(params));
+  }
+
+  async getAllItems(params: ScanCommandInput) {
+    return this.documentClient.send(new ScanCommand(params));
   }
 }

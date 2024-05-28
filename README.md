@@ -190,8 +190,10 @@ For all the above API endpoints, error responses should:
 ### Implementation Considerations
 - Using NestJs as per requirement
 - Using npm for this project for simplicity
-- Using docker to provide a container for the DynamoDB local database so it does not need to be installed locally.
-- Using environment variables to handle configurations and secrets.
+- Using docker to provide a container for the DynamoDB local database so it does not need to be installed locally
+- Using environment variables to handle configurations and secrets
+- Using `class-validator` and `class-transformer` to validate API inputs and registering a global ValidationPipe
+- Setting a global prefix for all API routes `api`
 
 ### DB implementation considerations
 - NoSQL Database
@@ -200,10 +202,10 @@ For all the above API endpoints, error responses should:
   
 #### Students Table 
 - Primary Key: `email` (Partition Key)
-- 
+  
 #### Teachers Table 
 - Primary Key: `email` (Partition Key)
-- 
+  
 #### Registration Table 
 - Primary Key: `teacherEmail` (Partition Key) and `studentEmail` (Sort Key)
 
@@ -220,9 +222,11 @@ For all the above API endpoints, error responses should:
 Make sure to have docker or podman installed.
 
 - Use `docker pull amazon/dynamodb-local` to pull the DynamoDB local Docker image. 
-- make sure to add the proper values to the `.env.local` file
-  - `AWS_REGION='localhost'
-    AWS_ENDPOINT='http://localhost:8000'`
+- make sure to add the proper values to the `.env.local` file:
+  ```json
+  API_PORT=3000
+  AWS_REGION="localhost"
+  AWS_ENDPOINT="http://localhost:8000"
 
 #### Run Locally
 - run `npm install` to install necessary dependencies.

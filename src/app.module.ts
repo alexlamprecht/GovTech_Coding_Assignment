@@ -1,13 +1,14 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { DynamoDbClient } from './shared/dynamodb.client';
-import { AppController } from './api/administrators/administrators.controller';
-import { AppService } from './api/administrators/administrators.service';
+
 import { DynamoDbService } from './shared/dynamodb.service';
+import { AdministratorController } from './api/administrators/administrator.controller';
+import { AdministratorService } from './api/administrators/administrator.service';
 
 @Module({
   imports: [],
-  controllers: [AppController],
-  providers: [AppService, DynamoDbClient, DynamoDbService],
+  controllers: [AdministratorController],
+  providers: [AdministratorService, DynamoDbClient, DynamoDbService],
 })
 export class AppModule implements OnModuleInit {
   constructor(private readonly dynamoDbService: DynamoDbService) {}
