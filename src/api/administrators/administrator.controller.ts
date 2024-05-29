@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Query } from '@nestjs/common';
 import { AdministratorService } from './administrator.service';
 import {
   CreateStudentRequest,
@@ -15,7 +7,6 @@ import {
   GetCommonStudentsRequest,
   RegisterStudentsToTeacherRequest,
 } from './administrator.dto';
-import { IsString } from 'class-validator';
 
 @Controller()
 export class AdministratorController {
@@ -28,17 +19,22 @@ export class AdministratorController {
 
   @Post('students')
   async createStudent(@Body() createStudentData: CreateStudentRequest) {
-    return this.administratorService.createStudent(createStudentData);
+    return await this.administratorService.createStudent(createStudentData);
   }
 
   @Post('teachers')
   async createTeacher(@Body() createTeacherData: CreateTeacherRequest) {
-    return this.administratorService.createTeacher(createTeacherData);
+    return await this.administratorService.createTeacher(createTeacherData);
   }
 
+  // @Get('teachers')
+  // async getAllTeachers() {
+  //   return await this.administratorService.getAllTeachers();
+  // }
+
   @Get('teachers')
-  async getTeachers() {
-    return this.administratorService.getTeachers();
+  async getAllTeachersWithStudents() {
+    return await this.administratorService.getAllTeachersWithStudents();
   }
 
   @Post('register')
@@ -46,7 +42,7 @@ export class AdministratorController {
   async registerStudentsToTeacher(
     @Body() registerStudentsToTeacherData: RegisterStudentsToTeacherRequest,
   ) {
-    return this.administratorService.registerStudents(
+    return await this.administratorService.registerStudents(
       registerStudentsToTeacherData,
     );
   }
@@ -56,13 +52,13 @@ export class AdministratorController {
   async deregisterStudentsFromTeacher(
     @Body() registerStudentsToTeacherData: DeregisterStudentFromTeacherRequest,
   ) {
-    return this.administratorService.deregisterStudents(
+    return await this.administratorService.deregisterStudents(
       registerStudentsToTeacherData,
     );
   }
 
   @Get('commonstudents')
   async getCommonStudents(@Query() data: GetCommonStudentsRequest) {
-    return this.administratorService.getCommonStudents(data.teacher);
+    return await this.administratorService.getCommonStudents(data.teacher);
   }
 }

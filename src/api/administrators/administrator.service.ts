@@ -64,7 +64,7 @@ export class AdministratorService {
     }
   }
 
-  async getTeachers(): Promise<any> {
+  async getAllTeachers(): Promise<any> {
     try {
       const result = await this.dbClient.getAllItems({
         TableName: 'Teachers',
@@ -257,4 +257,64 @@ export class AdministratorService {
       );
     }
   }
+
+  async getAllTeachersWithStudents() {
+    try {
+      const teachers = await this.dbClient.getAllItems({
+        TableName: 'Teachers',
+      });
+
+      // reduce teachers to only have their emails in an array called teachersEmails
+
+      const teacherEmails = teachers.Items.map((teacher) => teacher.email.S);
+
+      if (!teachers || !teacherEmails || teacherEmails.length === 0) {
+        throw new Error('No teachers found');
+      }
+
+      const registrationsResult = await Promise.all(
+        teacherEmails.map(async (teacherEmail) => {
+          const params = {
+            TableName: 'Registrations',
+            KeyConditionExpression: 'teacherEmail = :teacherEmail',
+            ExpressionAttributeValues: {
+              ':teacherEmail': { S: teacherEmail },
+            },
+          };
+          const result = await this.dbClient.queryItems(params);
+          return { teacherEmail, Items: result.Items };
+        }),
+      );
+
+      const registrationsByTeacherEmail = registrationsResult.reduce(
+        (acc, registration) => {
+          const teacherEmail = registration.teacherEmail;
+          const studentEmails = registration.Items?.map(
+            (item) => item.studentEmail.S,
+          );
+          acc[teacherEmail] = studentEmails;
+          return acc;
+        },
+        {},
+      );
+
+      return {
+        teachers: Object.keys(registrationsByTeacherEmail).map((teacher) => ({
+          email: teacher,
+          students: registrationsByTeacherEmail[teacher],
+        })),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error getting teachers with students: ${error.message}`,
+      );
+      throw new HttpException(
+        'Unable to get teachers with students',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    // return teachersWithStudents;
+  }
+
+  // In your controller
 }
