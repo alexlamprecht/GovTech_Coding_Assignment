@@ -1,11 +1,21 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { AdministratorService } from './administrator.service';
 import {
   CreateStudentRequest,
   CreateTeacherRequest,
   DeregisterStudentFromTeacherRequest,
+  GetCommonStudentsRequest,
   RegisterStudentsToTeacherRequest,
 } from './administrator.dto';
+import { IsString } from 'class-validator';
 
 @Controller()
 export class AdministratorController {
@@ -32,6 +42,7 @@ export class AdministratorController {
   }
 
   @Post('register')
+  @HttpCode(204)
   async registerStudentsToTeacher(
     @Body() registerStudentsToTeacherData: RegisterStudentsToTeacherRequest,
   ) {
@@ -41,11 +52,17 @@ export class AdministratorController {
   }
 
   @Post('deregister')
+  @HttpCode(200)
   async deregisterStudentsFromTeacher(
     @Body() registerStudentsToTeacherData: DeregisterStudentFromTeacherRequest,
   ) {
     return this.administratorService.deregisterStudents(
       registerStudentsToTeacherData,
     );
+  }
+
+  @Get('commonstudents')
+  async getCommonStudents(@Query() data: GetCommonStudentsRequest) {
+    return this.administratorService.getCommonStudents(data.teacher);
   }
 }

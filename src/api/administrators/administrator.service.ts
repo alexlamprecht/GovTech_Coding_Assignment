@@ -5,6 +5,7 @@ import {
   RegisterStudentsToTeacherRequest,
 } from './administrator.dto';
 import { DynamoDbClient } from 'src/shared/dynamodb.client';
+
 ('@aws-sdk/client-dynamodb');
 
 @Injectable()
@@ -85,7 +86,7 @@ export class AdministratorService {
   async registerStudents({
     teacher: teacherEmail,
     students: studentEmails,
-  }: RegisterStudentsToTeacherRequest): Promise<any> {
+  }: RegisterStudentsToTeacherRequest): Promise<void> {
     try {
       // check if the teacher exists
 
@@ -138,7 +139,7 @@ export class AdministratorService {
   async deregisterStudents({
     teacher: teacherEmail,
     student: studentEmail,
-  }: DeregisterStudentFromTeacherRequest): Promise<any> {
+  }: DeregisterStudentFromTeacherRequest): Promise<void> {
     try {
       // check if the teacher exists
       const teacher = await this.dbClient.getItem({
@@ -178,9 +179,82 @@ export class AdministratorService {
       );
     } catch (error) {
       this.logger.error(`Error deregistering student: ${error.message}`);
+      throw new HttpException(
+        'Unable to deregister student from teacher',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getCommonStudents(teacherEmails: string[]): Promise<any> {
+    try {
+      // check if the teacher exists
+      const teachers = (
+        await this.dbClient.getItems({
+          RequestItems: {
+            Teachers: {
+              Keys: teacherEmails.map((email) => ({
+                email,
+              })),
+            },
+          },
+        })
+      ).Responses?.Teachers;
+
+      if (!teachers || teachers.length === 0) {
+        throw new Error('Teacher not found');
+      }
+
+      const registrationsResult = await Promise.all(
+        teacherEmails.map(async (teacherEmail) => {
+          const params = {
+            TableName: 'Registrations',
+            KeyConditionExpression: 'teacherEmail = :teacherEmail',
+            ExpressionAttributeValues: {
+              ':teacherEmail': { S: teacherEmail },
+            },
+          };
+          return await this.dbClient.queryItems(params);
+        }),
+      );
+
+      if (teacherEmails.length === 1) {
+        return {
+          message: 'Common students retrieved successfully',
+          data: registrationsResult[0].Items.map(
+            (registration) => registration.studentEmail,
+          ),
+        };
+      }
+
+      const registrationsByTeacherEmail = registrationsResult.reduce(
+        (acc, registration) => {
+          const teacherEmail = registration.Items[0].teacherEmail.S;
+          const studentEmails = registration.Items.map(
+            (item) => item.studentEmail.S,
+          );
+          acc[teacherEmail] = studentEmails;
+          return acc;
+        },
+        {},
+      );
+
+      const commonStudents = Object.values(registrationsByTeacherEmail).reduce(
+        (acc: string[], studentEmails: string) => {
+          return acc.filter((email) => studentEmails.includes(email));
+        },
+      );
+
       return {
-        message: `Unable to deregister student from teacher`,
+        message: 'Common students retrieved successfully',
+        data: commonStudents,
       };
+    } catch (error) {
+      this.logger.error(`Error getting common students: ${error.message}`);
+      throw new HttpException(
+        'Unable to get common students',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

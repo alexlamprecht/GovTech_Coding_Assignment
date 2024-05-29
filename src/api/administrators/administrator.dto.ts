@@ -52,3 +52,11 @@ export class DeregisterStudentFromTeacherRequest {
   @IsNotEmpty()
   readonly reason: string;
 }
+
+export class GetCommonStudentsRequest {
+  @IsEmail({}, { each: true })
+  @ArrayNotEmpty()
+  @IsNotEmpty()
+  @IsArray()
+  teacher: string[];
+}

@@ -4,6 +4,8 @@ import {
   CreateTableCommandInput,
   DescribeTableCommand,
   DynamoDBClient,
+  QueryCommand,
+  QueryCommandInput,
   ScanCommand,
   TransactWriteItemsCommand,
   TransactWriteItemsCommandInput,
@@ -19,6 +21,8 @@ import {
   UpdateCommandInput,
   DeleteCommandInput,
   DeleteCommand,
+  BatchGetCommand,
+  BatchGetCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 
 @Injectable()
@@ -78,15 +82,23 @@ export class DynamoDbClient {
     return this.documentClient.send(new GetCommand(params));
   }
 
+  async getAllItems(params: ScanCommandInput) {
+    return this.documentClient.send(new ScanCommand(params));
+  }
+
+  async getItems(params: BatchGetCommandInput) {
+    return this.documentClient.send(new BatchGetCommand(params));
+  }
+
+  async queryItems(params: QueryCommandInput) {
+    return this.documentClient.send(new QueryCommand(params));
+  }
+
   async deleteItem(params: DeleteCommandInput) {
     return this.documentClient.send(new DeleteCommand(params));
   }
 
   async updateItem(params: UpdateCommandInput) {
     return this.documentClient.send(new UpdateCommand(params));
-  }
-
-  async getAllItems(params: ScanCommandInput) {
-    return this.documentClient.send(new ScanCommand(params));
   }
 }
