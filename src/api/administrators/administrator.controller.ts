@@ -3,6 +3,8 @@ import { AdministratorService } from './administrator.service';
 import {
   CreateStudentRequest,
   CreateTeacherRequest,
+  DeregisterStudentFromTeacherRequest,
+  RegisterStudentsToTeacherRequest,
 } from './administrator.dto';
 
 @Controller()
@@ -27,5 +29,23 @@ export class AdministratorController {
   @Get('teachers')
   async getTeachers() {
     return this.administratorService.getTeachers();
+  }
+
+  @Post('register')
+  async registerStudentsToTeacher(
+    @Body() registerStudentsToTeacherData: RegisterStudentsToTeacherRequest,
+  ) {
+    return this.administratorService.registerStudents(
+      registerStudentsToTeacherData,
+    );
+  }
+
+  @Post('deregister')
+  async deregisterStudentsFromTeacher(
+    @Body() registerStudentsToTeacherData: DeregisterStudentFromTeacherRequest,
+  ) {
+    return this.administratorService.deregisterStudents(
+      registerStudentsToTeacherData,
+    );
   }
 }
