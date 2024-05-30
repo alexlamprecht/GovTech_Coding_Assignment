@@ -1,22 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './administrator.controller';
-import { AppService } from './administrator.service';
+import { AdministratorController } from './administrator.controller';
+import { AdministratorService } from './administrator.service';
+import { DynamoDbClient } from '../../shared/dynamodb.client';
 
-describe('AppController', () => {
-  let appController: AppController;
+describe('AdministratorController', () => {
+  let administratorController: AdministratorController;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
+      controllers: [AdministratorController],
+      providers: [AdministratorService, DynamoDbClient],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    administratorController = app.get<AdministratorController>(
+      AdministratorController,
+    );
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  describe('Heartbeat', () => {
+    it('should return the correct string', () => {
+      expect(administratorController.heartbeat()).toMatch(
+        /^Heartbeat: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/,
+      );
     });
   });
 });

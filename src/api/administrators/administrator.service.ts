@@ -3,8 +3,11 @@ import {
   CreateStudentRequest,
   DeregisterStudentFromTeacherRequest,
   RegisterStudentsToTeacherRequest,
+  GetAllTeachersWithStudentsResponse,
+  GetCommonStudentsResponse,
 } from './administrator.dto';
-import { DynamoDbClient } from 'src/shared/dynamodb.client';
+import { DynamoDbClient } from '../../shared/dynamodb.client';
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
 
 ('@aws-sdk/client-dynamodb');
 
@@ -16,7 +19,14 @@ export class AdministratorService {
     this.dbClient = dbClient;
   }
 
-  async createStudent(createStudentData: CreateStudentRequest): Promise<any> {
+  /**
+   * Creates a new student record.
+   *
+   * @param createStudentData - The data required to create a student.
+   * @returns A promise that resolves to void.
+   * @throws {HttpException} If there is an error creating the student.
+   */
+  async createStudent(createStudentData: CreateStudentRequest): Promise<void> {
     const params = {
       TableName: 'Students',
       Item: {
@@ -26,11 +36,7 @@ export class AdministratorService {
     };
 
     try {
-      const result = await this.dbClient.addItem(params);
-      return {
-        message: 'Student created successfully',
-        data: result,
-      };
+      await this.dbClient.addItem(params);
     } catch (error) {
       this.logger.error(`Error creating student: ${error.message}`);
       throw new HttpException(
@@ -40,7 +46,13 @@ export class AdministratorService {
     }
   }
 
-  async createTeacher(createStudentData: CreateStudentRequest): Promise<any> {
+  /**
+   * Creates a new teacher.
+   * @param createStudentData - The data for creating the teacher.
+   * @returns A promise that resolves to void.
+   * @throws {HttpException} If there is an error creating the teacher.
+   */
+  async createTeacher(createStudentData: CreateStudentRequest): Promise<void> {
     const params = {
       TableName: 'Teachers',
       Item: {
@@ -50,11 +62,7 @@ export class AdministratorService {
     };
 
     try {
-      const result = await this.dbClient.addItem(params);
-      return {
-        message: 'Teacher created successfully',
-        data: result,
-      };
+      await this.dbClient.addItem(params);
     } catch (error) {
       this.logger.error(`Error creating teacher: ${error.message}`);
       throw new HttpException(
@@ -64,25 +72,13 @@ export class AdministratorService {
     }
   }
 
-  async getAllTeachers(): Promise<any> {
-    try {
-      const result = await this.dbClient.getAllItems({
-        TableName: 'Teachers',
-      });
-
-      return {
-        message: 'Teachers retrieved successfully',
-        data: result,
-      };
-    } catch (error) {
-      this.logger.error(`Error getting teachers: ${error.message}`);
-      throw new HttpException(
-        'Unable to get teachers',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
+  /**
+   * Registers students to a teacher.
+   *
+   * @param {RegisterStudentsToTeacherRequest} request - The request object containing the teacher's email and the list of student emails.
+   * @returns {Promise<void>} - A promise that resolves when the students are successfully registered to the teacher.
+   * @throws {HttpException} - If there is an error registering the students to the teacher.
+   */
   async registerStudents({
     teacher: teacherEmail,
     students: studentEmails,
@@ -136,6 +132,13 @@ export class AdministratorService {
     }
   }
 
+  /**
+   * Deregisters a student from a teacher.
+   *
+   * @param {DeregisterStudentFromTeacherRequest} request - The request object containing the teacher and student email.
+   * @returns {Promise<void>} - A promise that resolves when the student is successfully deregistered.
+   * @throws {HttpException} - If there is an error deregistering the student.
+   */
   async deregisterStudents({
     teacher: teacherEmail,
     student: studentEmail,
@@ -186,7 +189,61 @@ export class AdministratorService {
     }
   }
 
-  async getCommonStudents(teacherEmails: string[]): Promise<any> {
+  /**
+   * Retrieves registrations by teacher email.
+   *
+   * @param teacherEmails - An array of teacher emails.
+   * @returns A promise that resolves to an array of objects containing the teacher email and registration items.
+   */
+  private async getRegistrationsByTeacherEmail(teacherEmails: string[]) {
+    return await Promise.all(
+      teacherEmails.map(async (teacherEmail) => {
+        const params = {
+          TableName: 'Registrations',
+          KeyConditionExpression: 'teacherEmail = :teacherEmail',
+          ExpressionAttributeValues: {
+            ':teacherEmail': { S: teacherEmail },
+          },
+        };
+        const result = await this.dbClient.queryItems(params);
+        return { teacherEmail, Items: result.Items };
+      }),
+    );
+  }
+
+  /**
+   * Maps registrations to an object where the keys are teacher emails and the values are arrays of student emails.
+   *
+   * @param registrations - An array of registrations, each containing a teacher email and an array of student emails.
+   * @returns An object where the keys are teacher emails and the values are arrays of student emails.
+   */
+  private mapToRegistrationsByTeacherEmail(
+    registrations: {
+      teacherEmail: string;
+      Items: Record<string, AttributeValue>[];
+    }[],
+  ) {
+    return registrations.reduce((acc, registration) => {
+      const teacherEmail = registration.teacherEmail;
+      const studentEmails = registration.Items.map(
+        (item) => item.studentEmail.S,
+      );
+      acc[teacherEmail] = studentEmails;
+      return acc;
+    }, {});
+  }
+
+  /**
+   * Retrieves the common students for the given teacher emails.
+   *
+   * @param teacherEmails - An array of teacher emails.
+   * @returns A Promise that resolves to an object containing the message and data of the common students.
+   * @throws {Error} If the teacher is not found.
+   * @throws {HttpException} If there is an error retrieving the common students.
+   */
+  async getCommonStudents(
+    teacherEmails: string[],
+  ): Promise<GetCommonStudentsResponse> {
     try {
       // check if the teacher exists
       const teachers = (
@@ -205,49 +262,30 @@ export class AdministratorService {
         throw new Error('Teacher not found');
       }
 
-      const registrationsResult = await Promise.all(
-        teacherEmails.map(async (teacherEmail) => {
-          const params = {
-            TableName: 'Registrations',
-            KeyConditionExpression: 'teacherEmail = :teacherEmail',
-            ExpressionAttributeValues: {
-              ':teacherEmail': { S: teacherEmail },
-            },
-          };
-          return await this.dbClient.queryItems(params);
-        }),
-      );
+      // get registrations by teacher email
+      const registrationsResult =
+        await this.getRegistrationsByTeacherEmail(teacherEmails);
 
       if (teacherEmails.length === 1) {
         return {
-          message: 'Common students retrieved successfully',
-          data: registrationsResult[0].Items.map(
-            (registration) => registration.studentEmail,
+          students: registrationsResult[0].Items.map(
+            (registration) => registration.studentEmail?.S,
           ),
         };
       }
 
-      const registrationsByTeacherEmail = registrationsResult.reduce(
-        (acc, registration) => {
-          const teacherEmail = registration.Items[0].teacherEmail.S;
-          const studentEmails = registration.Items.map(
-            (item) => item.studentEmail.S,
-          );
-          acc[teacherEmail] = studentEmails;
-          return acc;
-        },
-        {},
-      );
+      const registrationsByTeacherEmail =
+        this.mapToRegistrationsByTeacherEmail(registrationsResult);
 
+      // find common students
       const commonStudents = Object.values(registrationsByTeacherEmail).reduce(
-        (acc: string[], studentEmails: string) => {
+        (acc: string[], studentEmails: string): string[] => {
           return acc.filter((email) => studentEmails.includes(email));
         },
-      );
+      ) as string[];
 
       return {
-        message: 'Common students retrieved successfully',
-        data: commonStudents,
+        students: commonStudents,
       };
     } catch (error) {
       this.logger.error(`Error getting common students: ${error.message}`);
@@ -258,13 +296,18 @@ export class AdministratorService {
     }
   }
 
-  async getAllTeachersWithStudents() {
+  /**
+   * Retrieves all teachers with their associated students.
+   * @returns An object containing an array of teachers with their students.
+   * @throws {Error} If no teachers are found.
+   * @throws {HttpException} If there is an error retrieving teachers with students.
+   */
+  async getAllTeachersWithStudents(): Promise<GetAllTeachersWithStudentsResponse> {
     try {
+      // get all teachers
       const teachers = await this.dbClient.getAllItems({
         TableName: 'Teachers',
       });
-
-      // reduce teachers to only have their emails in an array called teachersEmails
 
       const teacherEmails = teachers.Items.map((teacher) => teacher.email.S);
 
@@ -272,31 +315,12 @@ export class AdministratorService {
         throw new Error('No teachers found');
       }
 
-      const registrationsResult = await Promise.all(
-        teacherEmails.map(async (teacherEmail) => {
-          const params = {
-            TableName: 'Registrations',
-            KeyConditionExpression: 'teacherEmail = :teacherEmail',
-            ExpressionAttributeValues: {
-              ':teacherEmail': { S: teacherEmail },
-            },
-          };
-          const result = await this.dbClient.queryItems(params);
-          return { teacherEmail, Items: result.Items };
-        }),
-      );
+      // get registrations by teacher email
+      const registrationsResult =
+        await this.getRegistrationsByTeacherEmail(teacherEmails);
 
-      const registrationsByTeacherEmail = registrationsResult.reduce(
-        (acc, registration) => {
-          const teacherEmail = registration.teacherEmail;
-          const studentEmails = registration.Items?.map(
-            (item) => item.studentEmail.S,
-          );
-          acc[teacherEmail] = studentEmails;
-          return acc;
-        },
-        {},
-      );
+      const registrationsByTeacherEmail =
+        this.mapToRegistrationsByTeacherEmail(registrationsResult);
 
       return {
         teachers: Object.keys(registrationsByTeacherEmail).map((teacher) => ({
@@ -313,8 +337,5 @@ export class AdministratorService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    // return teachersWithStudents;
   }
-
-  // In your controller
 }

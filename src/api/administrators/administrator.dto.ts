@@ -60,3 +60,14 @@ export class GetCommonStudentsRequest {
   @IsArray()
   teacher: string[];
 }
+
+export class GetCommonStudentsResponse {
+  students: string[];
+}
+
+export class GetAllTeachersWithStudentsResponse {
+  teachers: {
+    email: string;
+    students: string[];
+  }[];
+}
