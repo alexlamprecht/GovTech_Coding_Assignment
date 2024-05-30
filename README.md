@@ -221,6 +221,7 @@ For all the above API endpoints, error responses should:
 ### Installation
 Make sure to have docker or podman installed.
 
+- Clone the repository
 - Use `docker pull amazon/dynamodb-local` to pull the DynamoDB local Docker image. 
 - make sure to add the proper values to the `.env.local` file:
   ```json
@@ -230,4 +231,4 @@ Make sure to have docker or podman installed.
 
 #### Run Locally
 - run `npm install` to install necessary dependencies.
-- run `npm run start:dev` to start server in watch mode. This also automatically starts the docker container containing the database.
+- run `npm run start:dev` to start server in watch mode. This also automatically starts the docker container containing the database and initializes it.
