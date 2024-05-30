@@ -223,8 +223,8 @@ For all the above API endpoints, error responses should:
 
 
 ### Installation & Usage
-Make sure to have docker or podman installed.
-
+- Make sure to have docker or podman installed
+- Make sure to have npm and Node.Js installed
 - Clone the repository
 - Use `docker pull amazon/dynamodb-local` to pull the DynamoDB local Docker image. 
 - make sure to add the proper values to the `.env.local` file:
