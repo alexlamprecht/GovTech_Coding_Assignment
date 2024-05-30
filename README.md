@@ -227,7 +227,7 @@ For all the above API endpoints, error responses should:
 - Make sure to have npm and Node.Js installed
 - Clone the repository
 - Use `docker pull amazon/dynamodb-local` to pull the DynamoDB local Docker image. 
-- make sure to add the proper values to the `.env.local` file:
+- make sure to create a `.env.local` file in the base directory and add the values below to the file:
   ```json
   API_PORT=3000
   AWS_REGION="localhost"
