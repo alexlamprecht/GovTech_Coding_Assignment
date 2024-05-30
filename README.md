@@ -222,7 +222,7 @@ For all the above API endpoints, error responses should:
 5) Install `class-validator` and `class-transformer` to handle the input validation pipeline
 
 
-### Installation
+### Installation & Usage
 Make sure to have docker or podman installed.
 
 - Clone the repository
@@ -237,3 +237,5 @@ Make sure to have docker or podman installed.
 - run `npm install` to install necessary dependencies.
 - run `npm run start:dev` to start server in watch mode. This also automatically starts the docker container containing the database and initializes it.
 - run `npm run test:cov` to run all tests with coverage
+- the API is available at http://localhost:3000/
+- visit http://localhost:3000/api/heartbeat to confirm proper functionality
