@@ -197,8 +197,11 @@ For all the above API endpoints, error responses should:
 
 ### DB implementation considerations
 - NoSQL Database
-- Disigning for single-table operations to reduce complexity
-- Allow data duplication to optimize queries
+- avoiding to handle registrations by having students in the teacher table and teachers in the student table to minimize query complexity and maintain atomicity
+- instead using three Tables:
+  -  Students 
+  -  Teachers
+  -  Registrations
   
 #### Students Table 
 - Primary Key: `email` (Partition Key)
@@ -216,6 +219,7 @@ For all the above API endpoints, error responses should:
 3) Install docker and pull the dynamodb-local image
 4) Install the AWS SDK v3, so it can be used to interface with the Database
 5) Install dotenv-cli to handle environment files
+5) Install `class-validator` and `class-transformer` to handle the input validation pipeline
 
 
 ### Installation
@@ -232,3 +236,4 @@ Make sure to have docker or podman installed.
 #### Run Locally
 - run `npm install` to install necessary dependencies.
 - run `npm run start:dev` to start server in watch mode. This also automatically starts the docker container containing the database and initializes it.
+- run `npm run test:cov` to run all tests with coverage
